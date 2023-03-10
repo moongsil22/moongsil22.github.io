@@ -1,0 +1,3 @@
+---
+BUNDLE_TRUST___POLICY: "LowSecurity"
+BUNDLE_SSL_VERIFY_MODE: "0"
