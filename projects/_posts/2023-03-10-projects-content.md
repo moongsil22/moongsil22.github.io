@@ -88,14 +88,15 @@ if __name__ == '__main__':
     print_hi('PyCharm')
 ~~~    
 
-## Python 예시2 liquid, html,markdown
+## Python 예시3 liquid, html,markdown
 
 가나다라마바사
 
 <pre>
 <code>
-{% raw %}
+
 {% highlight python %}
+{% raw %}
 {%-- if page.comments --%}
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
