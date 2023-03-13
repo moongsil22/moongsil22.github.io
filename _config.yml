@@ -89,12 +89,8 @@ remote_theme: hydecorp/hydejack@v9
 # ----------------------------------------------------------------------------------------
  
 # Sidebar image and theme color of the site.
-#accent_image:
-#  background:          center / cover url(/assets/img/music-cat-no-loop.gif)
-#  overlay:             false 
-#accent_color:          rgb(79,177,186)
 accent_image:
-  background:          center / cover url(/assets/img/music-cat-no-loop.gif)
+  background:          center / cover url(/assets/img/puppy_fixed.gif)
   overlay:             false
 accent_color:          rgb(0,174,239)
 
