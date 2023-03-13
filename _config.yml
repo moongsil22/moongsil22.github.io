@@ -93,7 +93,7 @@ apple_touch_icon: /assets/icons/apple-icon.png
  
 # Sidebar image and theme color of the site.
 accent_image:
-  background:          center / cover url(/assets/img/big-moving-dog-1920.gif)
+  background:          center / cover url(/assets/img/big-moving-dog-1900.gif)
   overlay:             false
 accent_color:          rgb(0,174,239)
 
