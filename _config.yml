@@ -83,6 +83,9 @@ paginate_path:         /:num/
   #theme: jekyll-theme-hydejack
 remote_theme: hydecorp/hydejack@v9
 
+# file: "_config.yml"
+favicon: /assets/icons/favicon.ico
+apple_touch_icon: /assets/icons/apple-icon.png
 
 
 # Customizaton
