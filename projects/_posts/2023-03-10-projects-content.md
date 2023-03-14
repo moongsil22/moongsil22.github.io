@@ -88,6 +88,18 @@ if __name__ == '__main__':
     print_hi('PyCharm')
 ~~~    
 
+## SAS 예시 ~~~
+
+가나다라마바사
+
+~~~sas
+PROC TRANSPOSE DATA=test NAME=oldvar;
+     ID varname;
+PROC PRINT;
+     TITLE 'ID문을 이용한 데이터의 전치'; 
+RUN;
+~~~    
+
 ## Python 예시3 liquid, html,markdown
 
 가나다라마바사
