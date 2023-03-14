@@ -75,7 +75,7 @@ adder(2, 6);
 
 #### 0. 오라클 연동, 라이브러리 참조, 변수 선언
 
-#### SAS 예시 ~~~
+#### SAS 
 
 오라클 연동 시, 선행작업으로 오라클 클라이언트 설치와 tnsnames.ora 파일 설정이 필요하다
 
@@ -88,21 +88,61 @@ LIBNAME ORADB ORACLE USER="test" PW="123456" PATH="TESTDB" SCHEMA="TEST" ORACLE_
 libname saslib "&DATA_DIR.\saslib";
 ~~~
 
-#### 1.1 File upload From CSV, EXCEL, ORACLE 
+#### Python
 
-#### SAS 예시 ~~~
+cx_Oracle 설치 필요. -> pip install cx_Oracle
+oracleTest.py 만든 다음사용. -> import oracleTest 
 
-가나다라마바사
+oracleTest.py
+~~~python
+import cx_Oracle as co
+import pandas as pd
+from _datetime import datetime
 
-~~~sas
-# from CSV 
 
-#### 1. File upload From CSV, EXCEL, ORACLE, 기생성된 데이터셋   
+def query_OracleSQL(query):
 
-#### SAS 예시 ~~~
+    start_tm = datetime.now()
 
-가나다라마바사
+    #   DB Connecion
+    dsn_tns = co.makedsn("130.1.50.52", "2100", service_name="DBNECOST")
+    conn = co.connect(user="duecosap01", password="bok2021!!", dsn=dsn_tns)
 
+    # Get a dataframe
+    query_result = pd.read_sql(query, conn)
+
+    # Close connection
+    conn.close()
+
+    end_tm = datetime.now()
+    print('START: ', str(start_tm))
+    print('END: ', str(end_tm))
+    print('ELAP: ', str(end_tm - start_tm))
+
+    return query_result
+~~~
+
+~~~python
+import oracleTest
+import pandas as pd
+import pandasql as ps
+import numpy as np
+from _datetime import datetime
+import re
+
+
+time = '2023'
+query = f"select code, formula from TEST.AA where time='{time}'"
+
+df1 = oracleTest.query_OracleSQL(query)
+~~~
+
+
+#### 1. Dataset Load From CSV, EXCEL, SQL query , Exist Dataset
+
+##### 1.1 CSV LOAD
+
+###### SAS
 ~~~sas
 # from CSV 
 
@@ -131,9 +171,29 @@ INPUT
   PRODUCT_CODE1 = BEST15.
   PRODUCT_CODE2 = BEST15.;  
 RUN;  
-~~~    
+~~~
 
-EXCEL
+###### python
+~~~python
+import pandas as pd
+
+T_001 = pd.read_csv(r"C:\Users\BOK\Desktop\단계별데이터추출\STEP1.T_001.csv", sep=',',
+names = ['no', 'name', 'age'],
+header=None,
+dtype = {"no":str,
+         "name":str,
+	 "age":str
+	 },
+low_memory=False)
+
+T_001.columns = map(lambda x: x.upper(), T_027P100.columns)
+~~~
+
+
+
+##### 1.2 EXCEL LOAD
+
+###### SAS
 
 ~~~sas
 PROC IMPORT OUT=WORK.DATA
@@ -144,8 +204,22 @@ GETNAMES=YES;
 RUN;
 ~~~
 
-ORACLE
+###### Python
 
+~~~python
+import pandas as pd
+FML = pd.read_excel(r"C:\data\step2_error_check.xlsx", sheet_name='FML',
+                        names=['KEY_SEQ', 'FML'])
+
+RULE = pd.read_excel(r"C:\data\step2_error_check.xlsx", sheet_name='RULE',
+                         names=['KEY_SEQ', 'CONDITION', 'ACNT_CODE', 'FORMULA'])
+
+~~~
+
+##### 1.3 ORACLE/QUERY TABLE LOAD
+
+###### SAS
+PROC SQL에서 SAS라이브러리/WORK/ORACLE DATA SET 로드하여 사용 가능. 테이블 생성 이외에 dml 처리 가능
 ~~~sas
 PROC SQL;
 CREATE TABLE BBB AS
@@ -157,35 +231,36 @@ QUIT;
 RUN;
 ~~~
 
-기생성된 데이터셋 참조
-
-~~~sas
-DATA NEWAA(KEEP=NAME CODE DROP=CNT RENAME=(NO=NEW_NO));
-SET AAA;
-WHERE
+###### PYTHON
+pandasql에서 dataframe 로드하여 사용 가능. 테이블 생성 이외에 dml 처리 가능
+~~~python
+import pandasql as ps
+query = f"select no, name from df1"
+df2 = ps.sqldf(query)
 ~~~
 
-#### Python 예시 ~~~
+##### 1.4 기생성된 데이터셋 참조하여 새로운 데이터셋 만들기
 
-가나다라마바사
-
+###### SAS
+~~~sas
+DATA NEWAA(KEEP=NAME CODE DROP=CNT RENAME=(NO=NEW_NO));
+SET AAA(where=(time='2019'));
+~~~
+###### Python
 ~~~python
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
+no_list = ['1','3','7']
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-~~~    
+df2 = df1.copy() #원본데이터 변경 방지를 위해 copy() 사용
+df2 = df2.loc[(~df2['no'].isin(no_list)) & (df2['name'] !='KANG')]
+
+~~~
 
 #### 1.2 File download
 
-#### SAS 예시 ~~~
+##### SAS
 
-dat
-
+1) dat
 ~~~sas
 DATA _NULL_;
 SET saslib.AA;
@@ -200,7 +275,7 @@ END;
 RUN;
 ~~~
 
-CSV
+2)CSV
 ~~~sas
 data _null_;
   set work.aa end=EFIEOD;
@@ -225,7 +300,7 @@ data _null_;
 run;  
 ~~~
 
-EXCEL
+3)EXCEL
 ~~~sas
 data _null_;
   set work.aa;
@@ -239,12 +314,17 @@ data _null_;
 run;  
 ~~~
 
+##### Python
+~~~python
+df.to_csv('./aa.csv')
+df.to_excel('./aa.xls')
+~~~
+
+
 #### 2. DROP 컬럼
 
-#### SAS 예시 ~~~
-
+##### SAS
 DATA, SET, OUT 블럭에서 사용가능
-
 ~~~sas
 DATA aaa(DROP=AMOUNT NO);
 RUN;
@@ -254,61 +334,93 @@ DROP AMOUNT;
 RUN;
 ~~~
 
+#### 3. RENAME 컬럼
+
+##### SAS
+DATA, SET, OUT 블럭에서 사용가능
+~~~sas
+DATA AA(RENAME=(OLD_AMOUNT=NEW_AMOUNT OLD_NO=NEW_NO));
+RUN;
+
+
+DATA AA;
+SET AA;
+NEW_AMOUNT = OLD_AMOUNT;
+NEW_NO = OLD_NO;
+RUN;
+~~~
+
+##### Python
+~~~python
+df.rename(columns={'old_name':'new_name', 'old_no':'new_no'}, inplace=True)
+~~~
+
+
 #### 3. SORT 정렬
 
-#### SAS 예시 ~~~
-
-PROC SORT 구문 이용
-
+##### SAS
 ~~~sas
 PROC SORT DATA=aaa; BY NO;
 RUN;
 ~~~
+##### Python
+~~~python
+df.sort_values(by=['no','name'], inplace=True)
+~~~
 
 #### 4. 데이터 전치(행 -> 열)
+ASIS
+NO CODE1 CODE2
+1 1000 2000
 
-#### SAS 예시 ~~~
+TOBE
+NO AMOUNT PRODUCT_CODE
+1 1000 CODE1
+1 2000 CODE2
 
+##### SAS
 ~~~sas
 PROC TRANSPOSE DATA=aaa
 OUT = aaa_TR(RENAME=(COL1=AMOUNT)) NAME=PRODUCT_CODE;
 BY NO;
 RUN;
 ~~~
-[ASIS]
-NO CODE1 CODE2
-1 1000 2000
-[TOBE]
+
+##### Python
+~~~python
+df_tr = pd.melt(data=df, id_vars=['NO'], value_vars=['CODE1', 'CODE2'], var_name='PRODUCT_CODE', value_name='AMOUNT')
+df_tr.sort_values(by=['NO'], inplace=True)
+~~~
+
+#### 5. 데이터 전치(열 -> 행)
+ASIS
 NO AMOUNT PRODUCT_CODE
 1 1000 CODE1
 1 2000 CODE2
 
+TOBE
+NO CODE1 CODE2
+1 1000 2000
 
-#### 5. 데이터 전치(열 -> 행)
-
-#### SAS 예시 ~~~
-
+##### SAS
 ~~~sas
 PROC TRANSPOSE DATA=aaa
 NAME = PRODUCT_CODE
 LABEL = PRODUCT_NAME LET OUT = aaa_TR;
 ID PRODUCT_CODE;
-BY NO AMOUNT;
+BY NO;
 RUN;
 ~~~
-[ASIS]
-NO AMOUNT PRODUCT_CODE
-1 1000 CODE1
-1 2000 CODE2
-[TOBE]
-NO CODE1 CODE2
-1 1000 2000
 
+##### Python
+~~~python
+df_tr = pd.pivot_table(data=df, index=['NO'], columns='PRODUCT_CODE', values='AMOUNT')
+df_tr.reset_index(inplace=True)
+~~~
 
 #### 6. 숫자형 변수 결측값 처리
 
-#### SAS 예시 ~~~
-
+##### SAS
 ~~~sas
 DATA aaa;
 SET aaa;
@@ -319,48 +431,82 @@ SET aaa;
 RUN;  
 ~~~
 
-#### 7. SQL Query 로 데이터 작업
+##### Python
+~~~python
+df.update(df.select_dtypes(include=[np.number]).fillna(0))
+~~~
 
-#### SAS 예시 ~~~
-SAS는 PROC SQL구문 안에서 ANSI SQL 문법 이용하여 데이터셋 생성/삭제/변경 가능.
+#### 7. 삭제
 
+##### 행 삭제
+
+###### SAS
 ~~~sas
 PROC SQL;
-CREATE TABLE B AS
-SELECT * FROM AAA
-WHERE NO = '1'
-QUIT;
-RUN;
-
-PROC SQL;
 DELETE FROM AAA
-WHERE NO = '1'
+WHERE NO = '1';
 QUIT;
 RUN;
+~~~
 
+###### Python
+~~~python
+df.drop(df[df['NO'] =='1'].index, inplace=True)
+~~~
+
+##### 열 삭제
+
+###### SAS
+~~~sas
+DATA AA(DROP=NO NAME);
+RUN;
+~~~
+
+###### Python
+~~~python
+df.drop(['NO', 'NAME'], axis=1, inplace=True)
 ~~~
 
 #### 8. 데이터셋 세로로 결합
 
-#### SAS 예시 ~~~
-SAS는 PROC APPEND 이용
-
+##### SAS
 ~~~sas
 PROC APPEND BASE=NEW_DATA DATA=AAA FORCE; RUN;
-
-CREATE TABLE B AS
-SELECT * FROM AAA
-WHERE NO = '1'
-QUIT;
-RUN;
-
-PROC SQL;
-DELETE FROM AAA
-WHERE NO = '1'
-QUIT;
-RUN;
-
 ~~~
+
+##### Python
+~~~python
+df_new = df_new.append(df_aaa)
+~~~
+
+#### 8. 데이터셋 가로로 결합(left merge)
+
+##### SAS
+~~~sas
+DATA AB;
+MERGE A(IN=T1) B(IN=T2);
+BY NO;
+IF T1=1 OR T2=0;
+~~~
+
+##### Python
+~~~python
+df_ab = df_a.merge(right=df_b, how='left', on=['NO'])
+~~~
+
+#### 10. 중복제거
+하기방법 이외에 쿼리에서 distinct 처리
+##### SAS
+~~~sas
+PROC SORT DATA=aa NODUPKEY;BY NO;
+RUN;
+~~~
+##### Python
+~~~python
+df.drup_duplicates(subset=['NO','NAME'], inplace=True, keep='first')
+~~~
+
+
 
 #### 기타1 SAS 매크로 로깅 방법
 ~~~sas
