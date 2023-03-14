@@ -73,7 +73,31 @@ adder(2, 6);
 // > 8
 ~~~
 
-#### 1. File upload From CSV, EXCEL, ORACLE 
+#### 0. 오라클 연동, 라이브러리 참조, 변수 선언
+
+#### SAS 예시 ~~~
+
+오라클 연동 시, 선행작업으로 오라클 클라이언트 설치와 tnsnames.ora 파일 설정이 필요하다
+
+~~~sas
+FILENAME PGM_PATH "&SAS_PGM_PTH./";
+%INCLUDE PGM_PATH(common.sas);
+LIBNAME ORADB ORACLE USER="test" PW="123456" PATH="TESTDB" SCHEMA="TEST" ORACLE_73=NO UPDATE_ISOLATION_LEVEL=READCOMMITTED DBINDEX=YES DBMAX_TEST=32767;
+
+%LET DATA_DIR = "C:\DATA";
+libname saslib "&DATA_DIR.\saslib";
+~~~
+
+#### 1.1 File upload From CSV, EXCEL, ORACLE 
+
+#### SAS 예시 ~~~
+
+가나다라마바사
+
+~~~sas
+# from CSV 
+
+#### 1. File upload From CSV, EXCEL, ORACLE, 기생성된 데이터셋   
 
 #### SAS 예시 ~~~
 
@@ -107,12 +131,39 @@ INPUT
   PRODUCT_CODE1 = BEST15.
   PRODUCT_CODE2 = BEST15.;  
 RUN;  
-
-# from EXCEL
 ~~~    
 
+EXCEL
 
+~~~sas
+PROC IMPORT OUT=WORK.DATA
+DATAFILE="C:\excel\file_name.xlsx"
+DBMS=XLSX REPLACE;
+RANGE="SHEET1$A1:B5";
+GETNAMES=YES;
+RUN;
+~~~
 
+ORACLE
+
+~~~sas
+PROC SQL;
+CREATE TABLE BBB AS
+SELECT USER_NAME
+FROM ORADB.BBB
+WHERE TIME="&TIME"
+ORDER BY UPJ;
+QUIT;
+RUN;
+~~~
+
+기생성된 데이터셋 참조
+
+~~~sas
+DATA NEWAA(KEEP=NAME CODE DROP=CNT RENAME=(NO=NEW_NO));
+SET AAA;
+WHERE
+~~~
 
 #### Python 예시 ~~~
 
@@ -129,6 +180,64 @@ if __name__ == '__main__':
     print_hi('PyCharm')
 ~~~    
 
+#### 1.2 File download
+
+#### SAS 예시 ~~~
+
+dat
+
+~~~sas
+DATA _NULL_;
+SET saslib.AA;
+FILE OUT_PATH(&OUT) MOD;
+IF FIRST.NO THEN DO;
+  PUT @20 "&TITLE";
+  PUT /"&ls_t1_line";
+  PUT @2 "데이터파일" @40 "처리건수";
+  PUT "&ls_t1_line"/;
+END;
+  PUT @2 source @40 CNT;
+RUN;
+~~~
+
+CSV
+~~~sas
+data _null_;
+  set work.aa end=EFIEOD;
+  %let _EFIERR_=0;
+  %let _EFIREC_=0;
+  file "outpath/xxx..csv" delimiter=',' DROPOVER DSD lrecl=10000;
+  format NO $2;
+  if _n_ = 1 then /*첫째줄 컬럼명 */
+  do;
+    put
+    'NO,'CODE','A1','A2','A3'
+  end;
+  do;
+    EFIOUT + 1;
+    put NO $ @;
+    put CODE $ @;
+    put A1-A3;
+    ;
+  end;
+  if _ERROR_ then call symputx('_EFIERR_',1);
+  if EFIEOD then call symputx('_EFIREC',EFIOUT);
+run;  
+~~~
+
+EXCEL
+~~~sas
+data _null_;
+  set work.aa;
+  file "outpath/xxx..xls" MOD delimiter='09'X DSD lrecl=10000;
+  if _n_ = 1 then do;
+   PUT /"&ls_t1_line";
+   PUT "종류" '09'X "사용여부" '09'X "건수" ;
+   PUT "&ls_t1_line"/;
+  end;
+  PUT NO USE_YN CNT
+run;  
+~~~
 
 #### 2. DROP 컬럼
 
@@ -162,20 +271,38 @@ RUN;
 
 ~~~sas
 PROC TRANSPOSE DATA=aaa
-NAME = PRODUCT_CODE
-LABEL = PRODUCT_NAME LET OUT = aaa_TR;
-ID PRODUCT_CODE;
-BY NO AMOUNT;
+OUT = aaa_TR(RENAME=(COL1=AMOUNT)) NAME=PRODUCT_CODE;
+BY NO;
 RUN;
 ~~~
+[ASIS]
+NO CODE1 CODE2
+1 1000 2000
+[TOBE]
+NO AMOUNT PRODUCT_CODE
+1 1000 CODE1
+1 2000 CODE2
+
 
 #### 5. 데이터 전치(열 -> 행)
 
 #### SAS 예시 ~~~
 
 ~~~sas
-#TODO
+PROC TRANSPOSE DATA=aaa
+NAME = PRODUCT_CODE
+LABEL = PRODUCT_NAME LET OUT = aaa_TR;
+ID PRODUCT_CODE;
+BY NO AMOUNT;
+RUN;
 ~~~
+[ASIS]
+NO AMOUNT PRODUCT_CODE
+1 1000 CODE1
+1 2000 CODE2
+[TOBE]
+NO CODE1 CODE2
+1 1000 2000
 
 
 #### 6. 숫자형 변수 결측값 처리
@@ -192,15 +319,78 @@ SET aaa;
 RUN;  
 ~~~
 
+#### 7. SQL Query 로 데이터 작업
 
-DATA aaa;
-PROC SORT; BY NO;
+#### SAS 예시 ~~~
+SAS는 PROC SQL구문 안에서 ANSI SQL 문법 이용하여 데이터셋 생성/삭제/변경 가능.
+
+~~~sas
+PROC SQL;
+CREATE TABLE B AS
+SELECT * FROM AAA
+WHERE NO = '1'
+QUIT;
+RUN;
+
+PROC SQL;
+DELETE FROM AAA
+WHERE NO = '1'
+QUIT;
+RUN;
+
+~~~
+
+#### 8. 데이터셋 세로로 결합
+
+#### SAS 예시 ~~~
+SAS는 PROC APPEND 이용
+
+~~~sas
+PROC APPEND BASE=NEW_DATA DATA=AAA FORCE; RUN;
+
+CREATE TABLE B AS
+SELECT * FROM AAA
+WHERE NO = '1'
+QUIT;
+RUN;
+
+PROC SQL;
+DELETE FROM AAA
+WHERE NO = '1'
+QUIT;
+RUN;
+
+~~~
+
+#### 기타1 SAS 매크로 로깅 방법
+~~~sas
+FILENAME MPRINT 'C:\DATA\LOG01.SAS';
+OPTIONS MPRINT MFILE MLOGIC SYMBOLGEN;
 RUN;
 ~~~
 
-## Python 예시3 liquid, html,markdown
+#### 기타2 SAS 매크로 함수 생성
+~~~sas
+	%MACRO FIND_FML(SEQ);
+		DATA _NULL_;
+			LENGTH KEY_SEQ 5. FORMULA $ 500;
+			SET formula_rule(WHERE=(SEQ=&SEQ)) end=last;
+			CALL SYMPUT("FML_"||LEFT(_N_), tranwrd(COMPRESS(FORMULA), 'ABS(','ABS(_')||';');
+			IF LAST THEN CALL SYMPUT("ls_FML", _N_);
+		RUN;
 
-가나다라마바사
+		%LET FML_LIST=;
+		%LET FML_QUOTE=;
+
+		%DO m = 1 %TO &ls_FML;
+			%LET FML_LIST=&FML_LIST &&FML_&m ;	
+		%END; 
+	%MEND FIND_FML;
+~~~
+#### 기타3 SAS WORK KILL
+
+PROC DATASETS LIBRARY=WORK MEMTYPE=DATA KILL; QUIT; RUN;
+
 
 <pre>
 <code>
