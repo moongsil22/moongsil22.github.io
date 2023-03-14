@@ -73,7 +73,48 @@ adder(2, 6);
 // > 8
 ~~~
 
-## Python 예시 ~~~
+#### 1. File upload From CSV, EXCEL, ORACLE 
+
+#### SAS 예시 ~~~
+
+가나다라마바사
+
+~~~sas
+# from CSV 
+
+FILENAME aaa "path/aaa.csv";
+
+DATA WORK.aaa;
+  INFILE aaa LRECL=100 ENCODING="UTF-8" delimiter = ';' MISSOVER DSD;
+LENGTH
+  NO $ 20
+  AMOUNT 8
+  PRODUCT_CODE1 8
+  PRODUCT_CODE2 8;
+LABEL
+  NO = "고유번호"
+  AMOUNT = "매출액"
+  PRODUCT_CODE1 = "상품1"
+  PRODUCT_CODE2 = "상품2";
+INFORMAT
+  NO = $CHAR32.
+  AMOUNT = BEST15.
+  PRODUCT_CODE1 = BEST15.
+  PRODUCT_CODE2 = BEST15.;
+INPUT
+  NO = $CHAR32.
+  AMOUNT = BEST15.
+  PRODUCT_CODE1 = BEST15.
+  PRODUCT_CODE2 = BEST15.;  
+RUN;  
+
+# from EXCEL
+~~~    
+
+
+
+
+#### Python 예시 ~~~
 
 가나다라마바사
 
@@ -88,17 +129,74 @@ if __name__ == '__main__':
     print_hi('PyCharm')
 ~~~    
 
-## SAS 예시 ~~~
 
-가나다라마바사
+#### 2. DROP 컬럼
+
+#### SAS 예시 ~~~
+
+DATA, SET, OUT 블럭에서 사용가능
 
 ~~~sas
-PROC TRANSPOSE DATA=test NAME=oldvar;
-     ID varname;
-PROC PRINT;
-     TITLE 'ID문을 이용한 데이터의 전치'; 
+DATA aaa(DROP=AMOUNT NO);
 RUN;
-~~~    
+
+DATA aaa;
+DROP AMOUNT;
+RUN;
+~~~
+
+#### 3. SORT 정렬
+
+#### SAS 예시 ~~~
+
+PROC SORT 구문 이용
+
+~~~sas
+PROC SORT DATA=aaa; BY NO;
+RUN;
+~~~
+
+#### 4. 데이터 전치(행 -> 열)
+
+#### SAS 예시 ~~~
+
+~~~sas
+PROC TRANSPOSE DATA=aaa
+NAME = PRODUCT_CODE
+LABEL = PRODUCT_NAME LET OUT = aaa_TR;
+ID PRODUCT_CODE;
+BY NO AMOUNT;
+RUN;
+~~~
+
+#### 5. 데이터 전치(열 -> 행)
+
+#### SAS 예시 ~~~
+
+~~~sas
+#TODO
+~~~
+
+
+#### 6. 숫자형 변수 결측값 처리
+
+#### SAS 예시 ~~~
+
+~~~sas
+DATA aaa;
+SET aaa;
+  ARRAY VALUE{*} _numeric_;
+  do i=1 to dim(VALUE);
+    IF VALUE(i) EQ . THEN VALUE(i)=0;
+  end;
+RUN;  
+~~~
+
+
+DATA aaa;
+PROC SORT; BY NO;
+RUN;
+~~~
 
 ## Python 예시3 liquid, html,markdown
 
