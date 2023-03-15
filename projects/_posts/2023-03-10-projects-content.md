@@ -598,23 +598,32 @@ RUN;
 #### 기타2 SAS 매크로 함수 생성 to Python
 
 ~~~sas
-	%MACRO FIND_FML(SEQ);
-		DATA _NULL_;
-			LENGTH KEY_SEQ 5. FORMULA $ 500;
-			SET formula_rule(WHERE=(SEQ=&SEQ)) end=last;
-			CALL SYMPUT("FML_"||LEFT(_N_), tranwrd(COMPRESS(FORMULA), 'ABS(','ABS(_')||';');
-			IF LAST THEN CALL SYMPUT("ls_FML", _N_);
-		RUN;
+%MACRO FIND_FML(SEQ);
+	DATA _NULL_;
+		LENGTH KEY_SEQ 5. FORMULA $ 500;
+		SET formula_rule(WHERE=(SEQ=&SEQ)) end=last;
+		CALL SYMPUT("FML_"||LEFT(_N_), tranwrd(COMPRESS(FORMULA), 'ABS(','ABS(_')||';');
+		IF LAST THEN CALL SYMPUT("ls_FML", _N_);
+	RUN;
 
-		%LET FML_LIST=;
-		%LET FML_QUOTE=;
+	%LET FML_LIST=;
+	%LET FML_QUOTE=;
 
-		%DO m = 1 %TO &ls_FML;
-			%LET FML_LIST=&FML_LIST &&FML_&m ;	
-		%END; 
-	%MEND FIND_FML;
+	%DO m = 1 %TO &ls_FML;
+		%LET FML_LIST=&FML_LIST &&FML_&m ;	
+	%END; 
+%MEND FIND_FML;
+
+%DO I = 1 %TO &ls_fml_cnt;
+  %LET FML_LIST=;
+  %FIND_FML(&&ls_fml_errcode&i);
+  DATA AAA;
+  SET AAA;
+  IF &&ls_fml&i THEN DO;
+     &FML_LIST;
+  END;
+%END;  
 	
-	%
 ~~~
 
 ~~~python
@@ -624,7 +633,12 @@ def find_fml_list(key_seq):
     v_fml_list = rule_tmp['FORMULA'].str.replace('ABS\(','abs(_').tolist()
 
     return v_fml_list
+
+fml_list = find_fml_list(key_seq)
+for i in fml_list:
+df_aaa.eval(i, inplace=True)
 ~~~
+   
 #### 기타3 SAS WORK KILL
 
 PROC DATASETS LIBRARY=WORK MEMTYPE=DATA KILL; QUIT; RUN;
