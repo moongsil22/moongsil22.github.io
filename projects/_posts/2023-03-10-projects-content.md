@@ -823,30 +823,28 @@ def get_sum(df, rule) :
 			if len(rule2) == 1 :
 			    break;
 """**************************************************************************************************
- 3. get_nts_sum 함수를 호출하여 오류체크 비율식의 컬럼별 연산을 하여 'result' 컬럼을 생성하여 비교대상컬럼('org_josano')과
-    비교하여 조건에 맞지 않는 데이터를 추려내 오류파일 생성
+ 3. get_sum 함수를 호출하여 오류체크 비율식의 컬럼별 연산을 하여 'result' 컬럼(우측 식) 을 생성하여 비교대상컬럼('org_column')(좌측 식)과
+    비교하여 조건에 맞지 않는 데이터를 추려내 오류파일 생성 EX) fml => A_column = B_column + C_column 
 **************************************************************************************************"""
 for index, row in formula_df.iterrows() :
     get_sum(df_aaa, row['formula_hap']) 
 	if row['operater2'] == '<>' :
-	    tmp_df = df_aaa[(df_aaa[row['org_josano']] != df_aaa['result'])]
+	    tmp_df = df_aaa[(df_aaa[row['org_column']] != df_aaa['result'])]
 	elif row['operater2'] == '=<' :
-	    tmp_df = df_aaa[(df_aaa[row['org_josano']] <= df_aaa['result'])]
+	    tmp_df = df_aaa[(df_aaa[row['org_column']] <= df_aaa['result'])]
 	elif row['operater2'] == '=>' :
-	    tmp_df = df_aaa[(df_aaa[row['org_josano']] >= df_aaa['result'])]
+	    tmp_df = df_aaa[(df_aaa[row['org_column']] >= df_aaa['result'])]
 	elif row['operater2'] == '<' :
-	    tmp_df = df_aaa[(df_aaa[row['org_josano']] < df_aaa['result'])]
+	    tmp_df = df_aaa[(df_aaa[row['org_column']] < df_aaa['result'])]
 	elif row['operater2'] == '>' :
-	    tmp_df = df_aaa[(df_aaa[row['org_josano']] > df_aaa['result'])]
+	    tmp_df = df_aaa[(df_aaa[row['org_column']] > df_aaa['result'])]
 	if len(tmp_df) > 0 :
-		tmp2_df = tmp_df[['no', row['org_josano'], 'result']]
-		tmp2_df.rename(columns={row['org_josano']:'org'}, inplace=True)
+		tmp2_df = tmp_df[['no', row['org_column'], 'result']]
+		tmp2_df.rename(columns={row['org_column']:'org'}, inplace=True)
 		tmp2_df.rename(columns={'result':'hap'}, inplace=True)
 		tmp2_df['cha'] = tmp2_df['org'] - tmp2_df['hap']
 		tmp2_df['fml'] = row['fml']
-		tmp2_df['fml_josa'] = row['fml_josa']
-		tmp2_df['josano'] = row['org_josano']
-		tmp2_df['acctcode'] = row['org_acnt']
+		tmp2_df['column_no'] = row['org_column_no']
 		invalid_df = pd.concat([invalid_df, tmp_df])
 		invalid_df = invalid_df.drop(['result'], axis=1)
 		invalid_df = invalid_df.drop_duplicates()
