@@ -105,8 +105,8 @@ def query_OracleSQL(query):
     start_tm = datetime.now()
 
     #   DB Connecion
-    dsn_tns = co.makedsn("130.1.50.52", "2100", service_name="DBNECOST")
-    conn = co.connect(user="duecosap01", password="bok2021!!", dsn=dsn_tns)
+    dsn_tns = co.makedsn("192.168.0.1", "1521", service_name="TEST")
+    conn = co.connect(user="test", password="123456", dsn=dsn_tns)
 
     # Get a dataframe
     query_result = pd.read_sql(query, conn)
@@ -418,7 +418,7 @@ df_tr = pd.pivot_table(data=df, index=['NO'], columns='PRODUCT_CODE', values='AM
 df_tr.reset_index(inplace=True)
 ~~~
 
-#### 6. 숫자형 변수 결측값 처리
+#### 6. 숫자형 변수 결측값 0으로 처리
 
 ##### SAS
 ~~~sas
@@ -506,6 +506,86 @@ RUN;
 df.drup_duplicates(subset=['NO','NAME'], inplace=True, keep='first')
 ~~~
 
+#### 10. 조건에 따른 새로운 컬럼 속성 추가
+하기방법 이외에 쿼리에서 CASE WHEN 처리
+예시1)
+##### SAS
+~~~sas
+DATA AAA;
+SET AAA;
+IF (REGION="A") AND AGE >= 50 THEN DO;
+  GROUP="1";
+END;
+ELSE IF (REGION="A") AND AGE < 50 THEN DO;
+  GROUP="2";
+END;
+IF NAME="ABC" THEN DO;
+GROUP="99";
+END;
+RUN;
+~~~
+##### Python
+~~~python
+df_aaa.loc[(df_aaa['REGION'] == 'A') & (df_aaa['AGE'] >= 50),'GROUP'] = '1'
+df_aaa.loc[(df_aaa['REGION'] == 'A') & (df_aaa['AGE'] < 50),'GROUP'] = '2'
+df_aaa.loc[(df_aaa['NAME'] == 'ABC'),'GROUP'] = '99'
+~~~
+예시2)
+##### SAS
+~~~sas
+DATA AAA;
+SET AAA;
+
+IF SUBSTSR(END_DATE,5,2)>="01" AND SUBSTSR(END_DATE,5,2)<="05" THEN CODE = "1";
+IF SUBSTSR(END_DATE,5,2)>="06" AND SUBSTSR(END_DATE,5,2)<="11" THEN CODE = "2";
+IF SUBSTSR(END_DATE,5,2)>="12" THEN CODE = "3";
+
+IF LENGTH(TRIM(END_DATE))=6 THEN DO;
+ MONTH=SUBSTR(END_DATE,5,2);
+END;
+ELSE DO;
+ MONTH="99";
+END;
+RUN;
+~~~
+##### Python
+~~~python
+df_aaa['CODE'] = df_aaa['END_DATE'].apply(lambda x: '1' if ( '01' <= str(x)[4:6] <= '05') else
+						    '2' if ( '06' <= str(x)[4:6] <= '11') else
+						    '3' if (  str(x)[4:6] == '12') else
+						    np.NAN)
+						    
+df_aaa['MONTH'] = df_aaa['END_DATE'].apply(lambda x: str(x)[4:6] if len(str(x).strip()) == 6 else
+						     '99')
+~~~
+예시3)
+##### SAS
+~~~sas
+DATA AAA;
+SET AAA;
+
+IF AMOUNT = 0 OR AMOUNT=. THEN AMT_CODE = "0";
+IF AMOUNT > 0 THEN AMT_CODE = "1";
+RUN;
+
+IF (REGION="1") OR (REGION="2") THEN REG_GROUP = "1"; 
+ELSE IF (REGION="3") OR (REGION="4") THEN REG_GROUP = "2";
+ELSE REG_GROUP="3";
+RUN;
+~~~
+##### Python
+~~~python
+df_aaa['AMT_CODE'] = df_aaa['AMOUNT'].apply(lambda x: '0' if ( x == 0 or np.isnan(x)) else
+						      '1' if ( x > 0 ) else
+						      np.NAN)
+
+df_aaa['REG_GROUP'] = df_aaa['REGION'].apply(lambda x: '1' if x in ['1','2'] else
+                                                       '2' if x in ['3','4'] else
+						       '3')
+~~~
+
+
+
 
 
 #### 기타1 SAS 매크로 로깅 방법
@@ -515,7 +595,8 @@ OPTIONS MPRINT MFILE MLOGIC SYMBOLGEN;
 RUN;
 ~~~
 
-#### 기타2 SAS 매크로 함수 생성
+#### 기타2 SAS 매크로 함수 생성 to Python
+
 ~~~sas
 	%MACRO FIND_FML(SEQ);
 		DATA _NULL_;
@@ -532,6 +613,17 @@ RUN;
 			%LET FML_LIST=&FML_LIST &&FML_&m ;	
 		%END; 
 	%MEND FIND_FML;
+	
+	%
+~~~
+
+~~~python
+def find_fml_list(key_seq):
+
+    rule_tmp = df_formula_rule.loc[df_formula_rule['KEY_SEQ']==key_seq]
+    v_fml_list = rule_tmp['FORMULA'].str.replace('ABS\(','abs(_').tolist()
+
+    return v_fml_list
 ~~~
 #### 기타3 SAS WORK KILL
 
