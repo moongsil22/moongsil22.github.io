@@ -413,6 +413,7 @@ RUN;
 ~~~
 
 ##### Python
+!pivot_table 경우 index컬럼 속성 안에 nan값이 있으면 row가 출력되지 않으므로 index column에 대하여 결측값 처리를 해야한다.
 ~~~python
 df_tr = pd.pivot_table(data=df, index=['NO'], columns='PRODUCT_CODE', values='AMOUNT')
 df_tr.reset_index(inplace=True)
@@ -871,6 +872,12 @@ if __name__ == '__main__':
 </code>
 </pre>
 
+경영분석 데이터 전처리 및 편제 
+1.자료로드 및 모수 확정
+2.원자료 오류검증(조건에 해당하는 경우 절대값 하여 합 처리)
+3.자료 계정 변환처리 (A자료 ->B자료로 맵핑)
+4.컬럼별 조건에 따른 새로운 컬럼 정의
+5.산식 오류 검증 (A1=A2+A3 가 맞는지 확인하는 절차)
 ## Lists
 
 Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aenean lacinia bibendum nulla sed consectetur. Etiam porta sem malesuada magna mollis euismod. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.
