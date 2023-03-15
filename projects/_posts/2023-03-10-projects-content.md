@@ -476,7 +476,10 @@ PROC APPEND BASE=NEW_DATA DATA=AAA FORCE; RUN;
 
 ##### Python
 ~~~python
+#1.append
 df_new = df_new.append(df_aaa)
+#2.concat
+df_new = pd.concat([df_aaa, df_bbb], axis=0)
 ~~~
 
 #### 8. 데이터셋 가로로 결합(left merge)
@@ -600,9 +603,9 @@ RUN;
 ~~~sas
 %MACRO FIND_FML(SEQ);
 	DATA _NULL_;
-		LENGTH KEY_SEQ 5. FORMULA $ 500;
+		LENGTH SEQ 5. FORMULA $ 500;
 		SET formula_rule(WHERE=(SEQ=&SEQ)) end=last;
-		CALL SYMPUT("FML_"||LEFT(_N_), tranwrd(COMPRESS(FORMULA), 'ABS(','ABS(_')||';');
+		CALL SYMPUT("FML_"||LEFT(_N_), COMPRESS(FORMULA)||';');
 		IF LAST THEN CALL SYMPUT("ls_FML", _N_);
 	RUN;
 
@@ -614,9 +617,9 @@ RUN;
 	%END; 
 %MEND FIND_FML;
 
-%DO I = 1 %TO &ls_fml_cnt;
+%DO I = 1 %TO &fml_cnt;
   %LET FML_LIST=;
-  %FIND_FML(&&ls_fml_errcode&i);
+  %FIND_FML(&&seq&i);
   DATA AAA;
   SET AAA;
   IF &&ls_fml&i THEN DO;
@@ -627,22 +630,85 @@ RUN;
 ~~~
 
 ~~~python
-def find_fml_list(key_seq):
+from pandas.core.computation.ops import UndefinedVariableError
 
-    rule_tmp = df_formula_rule.loc[df_formula_rule['KEY_SEQ']==key_seq]
-    v_fml_list = rule_tmp['FORMULA'].str.replace('ABS\(','abs(_').tolist()
+def find_fml_df(seq):
+    rule_tmp = df_formula_rule.loc[df_formula_rule['SEQ']==seq]    
+    return rule_tmp
 
-    return v_fml_list
-
-fml_list = find_fml_list(key_seq)
-for i in fml_list:
-df_aaa.eval(i, inplace=True)
+fml_df = find_fml_df(seq)
+for index, row in fml_df.iterrows():
+   try:
+      df_aaa.eval(row['formula'],inplace=True)
+   except UndefinedVariableError as err:
+      print(err)
+      df_aaa[row['left_val']] = np.nan
+   except TypeError as err:
+      print(err)
+      df_aaa[row['left_val']] = np.nan
+   except Exception as err:
+      print(err)
 ~~~
    
 #### 기타3 SAS WORK KILL
-
+~~~sas
 PROC DATASETS LIBRARY=WORK MEMTYPE=DATA KILL; QUIT; RUN;
+~~~
 
+
+#### PYTHON 데이터프레임 컬럼중에 특정패턴 가지는 컬럼 추출
+~~~python
+pattern = re.compile("A*[0-9]")
+t1_columns = ",".join('T1.'+ a_column for a_column in list(filter(lambda x: pattern.match(x), df_aaa.columns)))
+
+pattern = re.compile("A*[0-9]")
+columns = list(filter(lambda x: pattern.match(x), df_aaa.columns))
+~~~
+
+#### PYTHON 데이터프레임 특정 컬럼들의 합이 0인 row 추출
+~~~python
+pattern = re.compile("A*[0-9]")
+columns = list(filter(lambda x: pattern.match(x), df_aaa.columns))
+
+df_bbb = df_aaa.loc[df_aaa[columns].sum(axis=1) == 0]
+
+~~~
+
+
+#### PYTHON dataframe 특정 산식(A1=A2+A3)에 맞지 않는 오류건 row 추출하여 별도의 dataframe 생성 
+~~~python
+import operator
+ops = {
+    "+": operator.add,
+    "-": operator.sub,
+    "*": operator.mul,
+    "/": operator.truediv,
+    "<": operator.lt,
+    ">": operator.gt,
+    "=": operator.eq,
+    "=<": operator.le,
+    "<=": operator.le,
+    "=>": operator.ge,
+    ">=": operator.ge
+}
+
+column_list = ['NO', 'ORG', 'HAP', 'CHA']
+invalid_df = pd.DataFrame(columns=column_list)
+#A1=A2+A3
+#left = A1, right=A2+A3
+for idx, row in df_aaa.iterrows():
+    for idx2, items in df_formula_rule.iterrows():
+        op_func = ops[items['OPERATOR']]
+        left = eval(items['org'].replace("A", "row.A"))
+        right = eval(items['hap'].replace("A", "row.A"))
+
+	if op_func(left, right):
+            continue
+        else:
+            invalid_df.loc[len(invalid_df.index)] = [row['NO'], left, right, left-right]
+
+invalid_df.sort_values(by=['NO'], inplace=True)
+~~~
 
 <pre>
 <code>
