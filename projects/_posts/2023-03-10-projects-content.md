@@ -710,6 +710,148 @@ for idx, row in df_aaa.iterrows():
 invalid_df.sort_values(by=['NO'], inplace=True)
 ~~~
 
+#### PYTHON 후위표기법으로 계산하기
+~~~python
+"""**************************************************************************************************
+ 0. 함수 : Dataset의 컬럼간의 사칙연산을 후위표기법 알고리즘에 따라 구현
+   - 중위표기법 : (A+B)*(C+D)
+   - 후위표기법 : AB+CD+*
+   - 중위표기법을 후위표기법으로 스택(STACK)을 이용
+     1) 피연산자는 스택에 넣지않고 그냥 출력
+	 2) 연산자는 스택이 비었으면 스택에 push
+	 3) 연산자는 스택이 비어있지 않으면 스택에 있는 연산자와 우선순위를 비교해 스택에 있는 연산자의 우선순위가 
+	    같거나 크다면 스택에 있는 연산자를 pop을 한 후 출력하고 현재 연산자를 push
+	 4) 만약 3번에서 우선순위가 현재 연산자가 더 크면 현재 연산자를 push
+	 5) 수식이 킅나면 스택이 빌때까지 pop한 후 출력
+   rule  = ['A3', '+', 'A4', '+', 'A5', '+', 'A6'] 
+   rule2 = ['A3', 'A4', '+', 'A5', '+', 'A6', '+'] 
+**************************************************************************************************"""
+def get_sum(df, rule) :
+	p = re.compile('\W')
+	rule = rule.replace(" ", "")
+	match_all = p.finditer(rule)
+	idx = 0
+	tokens = []
+	stack = []
+	rule2 = []
+	for match in match_all :
+		logger.info(match)
+		if idx != match.start() :
+			tokens.append(rule[idx:match.start()])
+		tokens.append(match.group())
+		idx = match.end()
+	if idx != len(rule) :
+		tokens.append(rule[idx:])
+	
+	for token in tokens :
+		if token == '+' or token == '-' or token == '*' or token == '/' or token == '(' or token == ')':
+			if len(stack) == 0 :
+				stack.append(token)
+			else :
+				if token == ')' :
+					j = len(stack)-1
+					while True :
+						if stack[j] == '(' or j < 0 :
+							stack.pop(j)	
+							break
+						rule2.append(stack[j])
+						stack.pop(j)	
+						j = j-1
+				if token == '+' or token == '-' :
+					if stack[len(stack)-1] != '(' :
+						rule2.append(stack[len(stack)-1])
+						stack.pop(len(stack)-1)
+						stack.append(token)
+					else :
+						stack.append(token)
+				elif token == '*' or token == '/' :
+					if stack[len(stack)-1] != '+' and stack[len(stack)-1] != '-' and stack[len(stack)-1] != '(' :
+						rule2.append(stack[len(stack)-1])
+						stack.pop(len(stack)-1)
+						stack.append(token)
+				elif token == '(' :
+					stack.append(token)
+		else :
+			rule2.append(token)
+	for i in range(len(stack), 0, -1) :
+		if stack[i-1] != '(' :
+			rule2.append(stack[i-1])
+	
+	# 후기표기법으로 변경된 rule을 연산처리
+	# rule2의 피연산자가 1개이면 그값이 바로 target값
+	# rule2의 앞부터 연산자를 찾아 그 앞 2개의 피연산자를 연산처리한다. 연산자와 피연산자2개를 삭제하고 연산결과를 rule2에 추가한다
+	# target : result
+	# rule2 = ['A3', 'A4', '+', 'A5', '+', 'A6', '+'] 
+	# 연산: df['result'] = df['A3']+df['A4']
+    # rule2 = ['result','A5','+','A6','+']
+	# 연산: df['result'] = df['result']+df['A5']
+    # rule2 = ['result','A6','+']
+	# 연산: df['result'] = df['result']+df['A6']
+	col1 = 'result'
+	col2 = ''
+	col3 = ''
+	idx = 0
+	if len(rule2) == 1 :
+		if rule2[0] == '0' :
+			df[col1] = 0
+		else :
+			df[col1] = df[rule2[0]]
+	else :
+	    k = 0
+		result = 0
+	    while True :
+			st = rule2[k] 
+			if st == '+' or st == '-' or st == '*' or st == '/' :
+			    col1 = 'result'
+				col2 = rule2[k-2]
+				col3 = rule2[k-1]
+				rule2.pop(k)
+				rule2.pop(k-1)
+				rule2[k-2] = col1
+				if col3 != '0' :
+					if st == '+' :
+						df[col1] = df[col2] + df[col3]
+					elif st == '-' :
+						df[col1] = df[col2] - df[col3]
+					elif st == '*' :
+						df[col1] = df[col2] * df[col3]
+					elif st == '/' :
+						df[col1] = df[col2] / df[col3]
+				k = 0
+			else :
+			    k = k+1
+			if len(rule2) == 1 :
+			    break;
+"""**************************************************************************************************
+ 3. get_nts_sum 함수를 호출하여 오류체크 비율식의 컬럼별 연산을 하여 'result' 컬럼을 생성하여 비교대상컬럼('org_josano')과
+    비교하여 조건에 맞지 않는 데이터를 추려내 오류파일 생성
+**************************************************************************************************"""
+for index, row in formula_df.iterrows() :
+    get_sum(df_aaa, row['formula_hap']) 
+	if row['operater2'] == '<>' :
+	    tmp_df = df_aaa[(df_aaa[row['org_josano']] != df_aaa['result'])]
+	elif row['operater2'] == '=<' :
+	    tmp_df = df_aaa[(df_aaa[row['org_josano']] <= df_aaa['result'])]
+	elif row['operater2'] == '=>' :
+	    tmp_df = df_aaa[(df_aaa[row['org_josano']] >= df_aaa['result'])]
+	elif row['operater2'] == '<' :
+	    tmp_df = df_aaa[(df_aaa[row['org_josano']] < df_aaa['result'])]
+	elif row['operater2'] == '>' :
+	    tmp_df = df_aaa[(df_aaa[row['org_josano']] > df_aaa['result'])]
+	if len(tmp_df) > 0 :
+		tmp2_df = tmp_df[['no', row['org_josano'], 'result']]
+		tmp2_df.rename(columns={row['org_josano']:'org'}, inplace=True)
+		tmp2_df.rename(columns={'result':'hap'}, inplace=True)
+		tmp2_df['cha'] = tmp2_df['org'] - tmp2_df['hap']
+		tmp2_df['fml'] = row['fml']
+		tmp2_df['fml_josa'] = row['fml_josa']
+		tmp2_df['josano'] = row['org_josano']
+		tmp2_df['acctcode'] = row['org_acnt']
+		invalid_df = pd.concat([invalid_df, tmp_df])
+		invalid_df = invalid_df.drop(['result'], axis=1)
+		invalid_df = invalid_df.drop_duplicates()
+		invalid_sum_df = pd.concat([invalid_sum_df, tmp2_df])
+~~~
 <pre>
 <code>
 
