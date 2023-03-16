@@ -428,3 +428,15 @@ jekyll_compose:
       links:
         - title: Project Link
           url: https://example.com
+
+# Tipue Search
+tipue_search:
+     include:
+         pages: false
+         collections: []
+     exclude:
+         files: [search.html, index.html, tages.html]
+         categories: []
+         tags: []
+
+
