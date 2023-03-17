@@ -316,7 +316,7 @@ run;
 4)
 ~~~sas
 PROC EXPORT DATA=WORK.AAA
-OUTFILE='C:\data\aaa.csv'
+OUTFILE="C:\data\aaa.csv"
 DBMS=CSV;
 RUN;
 ~~~
