@@ -138,9 +138,9 @@ df1 = oracleTest.query_OracleSQL(query)
 ~~~
 
 
-#### 1. Dataset Load From CSV, EXCEL, SQL query , Exist Dataset
+#### 1. Dataset import From CSV, EXCEL, SQL query , Exist Dataset
 
-##### 1.1 CSV LOAD
+##### 1.1 CSV 
 
 ###### SAS
 ~~~sas
@@ -191,7 +191,7 @@ T_001.columns = map(lambda x: x.upper(), T_027P100.columns)
 
 
 
-##### 1.2 EXCEL LOAD
+##### 1.2 EXCEL 
 
 ###### SAS
 
@@ -216,7 +216,7 @@ RULE = pd.read_excel(r"C:\data\step2_error_check.xlsx", sheet_name='RULE',
 
 ~~~
 
-##### 1.3 ORACLE/QUERY TABLE LOAD
+##### 1.3 ORACLE/QUERY TABLE 
 
 ###### SAS
 PROC SQL에서 SAS라이브러리/WORK/ORACLE DATA SET 로드하여 사용 가능. 테이블 생성 이외에 dml 처리 가능
@@ -256,7 +256,7 @@ df2 = df2.loc[(~df2['no'].isin(no_list)) & (df2['name'] !='KANG')]
 
 ~~~
 
-#### 1.2 File download
+#### 1.2 File export
 
 ##### SAS
 
@@ -312,6 +312,13 @@ data _null_;
   end;
   PUT NO USE_YN CNT
 run;  
+~~~
+4)
+~~~sas
+PROC EXPORT DATA=WORK.AAA
+OUTFILE='C:\data\aaa.csv'
+DBMS=CSV;
+RUN;
 ~~~
 
 ##### Python
