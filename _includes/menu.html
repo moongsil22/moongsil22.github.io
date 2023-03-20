@@ -1,0 +1,26 @@
+{% assign menu_url = page.url | slice: 1, 6 %}{% if menu_url == 'search' %}{% assign menu_index = 1 %}{% endif %}
+
+<!-- CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.1/css/all.min.css" />
+
+<!--상단메뉴바-->
+<div id="_navbar" class="navbar fixed-top">
+  <div class="content">
+    <span class="sr-only">{{ site.data.strings.jump_to | default:"Jump to" }}{{ site.data.strings.colon | default:":" }}</span>
+    <div class="nav-btn-bar">
+      <a id="_menu" class="nav-btn no-hover" href="#_drawer--opened">
+        <span class="sr-only">{{ site.data.strings.navigation | default:"Navigation" }}</span>
+        <span class="icon-menu"></span>
+      </a>
+
+      <!--상단메뉴 카테고리들 -->
+    <div class="top-menu">
+      <a href="{{ '/search' | prepend: site.baseurl }}" class="nav-btn top-menu"> 
+        <i class="fas fa-fw {% if menu_index == 1 %}fa-search-dollar{% else %}fa-search{% endif %}"></i>
+        <span>Search</span>
+      </a>
+    </div>
+  </div>
+  </div>
+</div>
+<hr class="sr-only" hidden />
