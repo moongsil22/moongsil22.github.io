@@ -1,8 +1,7 @@
 ---
 layout: list
-title: Posts
+title: 개발 블로그
 description: >
-  This is the `list` layout for showing blog posts, which shows just the title and groups them by year of publication.
-  Check out the `blog` layout for comparison.
+  업무 중 마주친 문제와 해결 과정을 정리하는 개발 기록입니다.
 grouped: true
 ---

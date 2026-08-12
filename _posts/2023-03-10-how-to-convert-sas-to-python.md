@@ -2,76 +2,10 @@
 layout: post
 title: How to Convert SAS to Python
 description: >
-  Howdy! This is an example blog post that shows several types of HTML content supported in this theme.
-sitemap: false
-hide_last_modified: true
+  SAS에서 Python으로 데이터 전처리 로직을 이관할 때 자주 쓰는 패턴 모음 (Oracle 연동, Import/Export, 컬럼 처리, 전치, 결합, 조건 컬럼 생성, 매크로 대체 등).
 ---
 
-Cum sociis natoque penatibus et magnis <a href="#">dis parturient montes</a>, nascetur ridiculus mus. *Aenean eu leo quam.* Pellentesque ornare sem lacinia quam venenatis vestibulum. Sed posuere consectetur est at lobortis. Cras mattis consectetur purus sit amet fermentum.
-
-> Curabitur blandit tempus porttitor. Nullam quis risus eget urna mollis ornare vel eu leo. Nullam id dolor id nibh ultricies vehicula ut id elit.
-
-Etiam porta **sem malesuada magna** mollis euismod. Cras mattis consectetur purus sit amet fermentum. Aenean lacinia bibendum nulla sed consectetur.
-
-## Inline HTML elements
-
-HTML defines a long list of available inline tags, a complete list of which can be found on the [Mozilla Developer Network](https://developer.mozilla.org/en-US/docs/Web/HTML/Element).
-
-- **To bold text**, use `**To bold text**`.
-- *To italicize text*, use `*To italicize text*`.
-- Abbreviations, like HTML should be defined like this `*[HTML]: HyperText Markup Language`.
-- Citations, like <cite>&mdash; Mark otto</cite>, should use `<cite>`.
-- ~~Deleted~~ text should use `~~deleted~~` and <ins>inserted</ins> text should use `<ins>`.
-- Superscript <sup>text</sup> uses `<sup>` and subscript <sub>text</sub> uses `<sub>`.
-
-Most of these elements are styled by browsers with few modifications on our part.
-
-## Heading 2
-Vivamus sagittis lacus vel augue rutrum faucibus dolor auctor. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.
-
-### Heading 3
-Vivamus sagittis lacus vel augue rutrum faucibus dolor auctor.
-
-#### Heading 4
-Vivamus sagittis lacus vel augue rutrum faucibus dolor auctor.
-
-##### Heading 5
-Vivamus sagittis lacus vel augue rutrum faucibus dolor auctor.
-
-###### Heading 6
-Vivamus sagittis lacus vel augue rutrum faucibus dolor auctor.
-
-## Code
-
-Cum sociis natoque penatibus et magnis dis `code element` montes, nascetur ridiculus mus.
-
-~~~js
-// Example can be run directly in your JavaScript console
-
-// Create a function that takes two arguments and returns the sum of those
-// arguments
-var adder = new Function("a", "b", "return a + b");
-
-// Call the function
-adder(2, 6);
-// > 8
-~~~
-
-## Code2
-
-Cum sociis natoque penatibus et magnis dis `code element` montes, nascetur ridiculus mus.
-
-~~~js
-// Example can be run directly in your JavaScript console
-
-// Create a function that takes two arguments and returns the sum of those
-// arguments
-var adder = new Function("a", "b", "return a + b");
-
-// Call the function
-adder(2, 6);
-// > 8
-~~~
+경영분석 데이터 전처리 로직을 SAS에서 Python으로 이관하면서 자주 쓰게 된 패턴을 정리해둔다. Oracle 연동부터 Import/Export, 컬럼 가공, 전치, 결합, 조건별 컬럼 생성, SAS 매크로를 Python으로 대체하는 방법까지 실무에서 반복적으로 마주친 순서대로 묶었다.
 
 #### 0. 오라클 연동, 라이브러리 참조, 변수 선언
 
@@ -104,7 +38,7 @@ def query_OracleSQL(query):
 
     start_tm = datetime.now()
 
-    #   DB Connecion
+    #   DB Connecion
     dsn_tns = co.makedsn("192.168.0.1", "1521", service_name="TEST")
     conn = co.connect(user="test", password="123456", dsn=dsn_tns)
 
@@ -256,7 +190,7 @@ df2 = df2.loc[(~df2['no'].isin(no_list)) & (df2['name'] !='KANG')]
 
 ~~~
 
-#### 1.2 File export
+#### 2. File Export (내보내기)
 
 ##### SAS
 
@@ -328,7 +262,7 @@ df.to_excel('./aa.xls')
 ~~~
 
 
-#### 2. DROP 컬럼
+#### 3. DROP 컬럼
 
 ##### SAS
 DATA, SET, OUT 블럭에서 사용가능
@@ -341,7 +275,7 @@ DROP AMOUNT;
 RUN;
 ~~~
 
-#### 3. RENAME 컬럼
+#### 4. RENAME 컬럼
 
 ##### SAS
 DATA, SET, OUT 블럭에서 사용가능
@@ -363,7 +297,7 @@ df.rename(columns={'old_name':'new_name', 'old_no':'new_no'}, inplace=True)
 ~~~
 
 
-#### 3. SORT 정렬
+#### 5. SORT 정렬
 
 ##### SAS
 ~~~sas
@@ -375,7 +309,7 @@ RUN;
 df.sort_values(by=['no','name'], inplace=True)
 ~~~
 
-#### 4. 데이터 전치(행 -> 열)
+#### 6. 데이터 전치(행 -> 열)
 ASIS
 NO CODE1 CODE2
 1 1000 2000
@@ -399,7 +333,7 @@ df_tr = pd.melt(data=df, id_vars=['NO'], value_vars=['CODE1', 'CODE2'], var_name
 df_tr.sort_values(by=['NO'], inplace=True)
 ~~~
 
-#### 5. 데이터 전치(열 -> 행)
+#### 7. 데이터 전치(열 -> 행)
 ASIS
 NO AMOUNT PRODUCT_CODE
 1 1000 CODE1
@@ -426,7 +360,7 @@ df_tr = pd.pivot_table(data=df, index=['NO'], columns='PRODUCT_CODE', values='AM
 df_tr.reset_index(inplace=True)
 ~~~
 
-#### 6. 숫자형 변수 결측값 0으로 처리
+#### 8. 숫자형 변수 결측값 0으로 처리
 
 ##### SAS
 ~~~sas
@@ -444,7 +378,7 @@ RUN;
 df.update(df.select_dtypes(include=[np.number]).fillna(0))
 ~~~
 
-#### 7. 삭제
+#### 9. 삭제
 
 ##### 행 삭제
 
@@ -475,7 +409,7 @@ RUN;
 df.drop(['NO', 'NAME'], axis=1, inplace=True)
 ~~~
 
-#### 8. 데이터셋 세로로 결합
+#### 10. 데이터셋 세로로 결합
 
 ##### SAS
 ~~~sas
@@ -490,7 +424,7 @@ df_new = df_new.append(df_aaa)
 df_new = pd.concat([df_aaa, df_bbb], axis=0)
 ~~~
 
-#### 8. 데이터셋 가로로 결합(left merge)
+#### 11. 데이터셋 가로로 결합(left merge)
 
 ##### SAS
 ~~~sas
@@ -505,7 +439,7 @@ IF T1=1 OR T2=0;
 df_ab = df_a.merge(right=df_b, how='left', on=['NO'])
 ~~~
 
-#### 10. 중복제거
+#### 12. 중복제거
 하기방법 이외에 쿼리에서 distinct 처리
 ##### SAS
 ~~~sas
@@ -517,7 +451,7 @@ RUN;
 df.drup_duplicates(subset=['NO','NAME'], inplace=True, keep='first')
 ~~~
 
-#### 10. 조건에 따른 새로운 컬럼 속성 추가
+#### 13. 조건에 따른 새로운 컬럼 속성 추가
 하기방법 이외에 쿼리에서 CASE WHEN 처리
 예시1)
 ##### SAS
@@ -594,7 +528,6 @@ df_aaa['REG_GROUP'] = df_aaa['REGION'].apply(lambda x: '1' if x in ['1','2'] els
                                                        '2' if x in ['3','4'] else
 						       '3')
 ~~~
-
 
 
 
@@ -858,84 +791,11 @@ for index, row in formula_df.iterrows() :
 		invalid_df = invalid_df.drop_duplicates()
 		invalid_sum_df = pd.concat([invalid_sum_df, tmp2_df])
 ~~~
-<pre>
-<code>
 
-{% highlight python %}
-{% raw %}
-{%-- if page.comments --%}
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+#### 경영분석 데이터 전처리 및 편제 절차
 
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-~~~
-{%-- endif --%}
-{% endraw %}
-{% endhighlight %}
-</code>
-</pre>
-
-경영분석 데이터 전처리 및 편제 
-1.자료로드 및 모수 확정
-2.원자료 오류검증(조건에 해당하는 경우 절대값 하여 합 처리)
-3.자료 계정 변환처리 (A자료 ->B자료로 맵핑)
-4.컬럼별 조건에 따른 새로운 컬럼 정의
-5.산식 오류 검증 (A1=A2+A3 가 맞는지 확인하는 절차)
-## Lists
-
-Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Aenean lacinia bibendum nulla sed consectetur. Etiam porta sem malesuada magna mollis euismod. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.
-
-* Praesent commodo cursus magna, vel scelerisque nisl consectetur et.
-* Donec id elit non mi porta gravida at eget metus.
-* Nulla vitae elit libero, a pharetra augue.
-
-Donec ullamcorper nulla non metus auctor fringilla. Nulla vitae elit libero, a pharetra augue.
-
-1. Vestibulum id ligula porta felis euismod semper.
-2. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-3. Maecenas sed diam eget risus varius blandit sit amet non magna.
-
-Cras mattis consectetur purus sit amet fermentum. Sed posuere consectetur est at lobortis.
-
-HyperText Markup Language (HTML)
-: The language used to describe and define the content of a Web page
-
-Cascading Style Sheets (CSS)
-: Used to describe the appearance of Web content
-
-JavaScript (JS)
-: The programming language used to build advanced Web sites and applications
-
-Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Nullam quis risus eget urna mollis ornare vel eu leo.
-
-## Images
-
-Quisque consequat sapien eget quam rhoncus, sit amet laoreet diam tempus. Aliquam aliquam metus erat, a pulvinar turpis suscipit at.
-
-![800x400](https://via.placeholder.com/800x400 "Large example image")
-
-![400x200](https://via.placeholder.com/400x200 "Medium example image")
-
-![200x200](https://via.placeholder.com/200x200 "Small example image")
-
-## Tables
-
-Aenean lacinia bibendum nulla sed consectetur. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-
-| Name     | Upvotes   | Downvotes |
-|:---------|:----------|:----------|
-| Alice    |        10 |        11 |
-| Bob      |         4 |         3 |
-| Charlie  |         7 |         9 |
-|==========|===========|===========|
-|Totals    |        21 |        23 |
-
-Nullam id dolor id nibh ultricies vehicula ut id elit. Sed posuere consectetur est at lobortis. Nullam quis risus eget urna mollis ornare vel eu leo.
-
-*[HTML]: HyperText Markup Language
-*[CSS]: Cascading Style Sheets
-*[JS]: JavaScript
+1. 자료로드 및 모수 확정
+2. 원자료 오류검증(조건에 해당하는 경우 절대값 하여 합 처리)
+3. 자료 계정 변환처리 (A자료 ->B자료로 맵핑)
+4. 컬럼별 조건에 따른 새로운 컬럼 정의
+5. 산식 오류 검증 (A1=A2+A3 가 맞는지 확인하는 절차)
