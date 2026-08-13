@@ -82,10 +82,10 @@
 
 <script>
 (function () {
-  // 이 사이트는 hy-push-state(SPA 방식)로 페이지를 넘겨서, #_main 바깥에 있는
-  // 이 네브바는 페이지 이동 시 자동으로 다시 렌더링되지 않는다.
-  // 그래서 페이지가 바뀔 때마다(초기 로드 + SPA 네비게이션 후) 토글의 href/active 상태를
-  // 현재 location.pathname 기준으로 다시 계산해서 반영한다.
+  /* 이 사이트는 hy-push-state(SPA 방식)로 페이지를 넘겨서, #_main 바깥에 있는
+     이 네브바는 페이지 이동 시 자동으로 다시 렌더링되지 않는다.
+     그래서 페이지가 바뀔 때마다(초기 로드 + SPA 네비게이션 후) 토글의 href/active 상태를
+     현재 location.pathname 기준으로 다시 계산해서 반영한다. */
   var KO_PAGES = ['/', '/about/', '/cover-letter/', '/projects/', '/posts/'];
   var POST_RE = /^\/\d{4}-\d{2}-\d{2}-.+\/$/;
 
@@ -134,9 +134,9 @@
   document.addEventListener('DOMContentLoaded', function () {
     var pushStateEl = document.getElementById('_pushState');
     if (pushStateEl) {
-      // 실제 hy-push-state 커스텀 엘리먼트가 쏘는 이벤트는 -after가 아니라
-      // -load / -ready 다. (예전에 -after로 잘못 걸어놔서 SPA 네비게이션 후
-      // 토글이 계속 이전 페이지 상태로 멈춰있던 버그의 원인이었음)
+      /* 실제 hy-push-state 커스텀 엘리먼트가 쏘는 이벤트는 -after가 아니라
+         -load / -ready 다. (예전에 -after로 잘못 걸어놔서 SPA 네비게이션 후
+         토글이 계속 이전 페이지 상태로 멈춰있던 버그의 원인이었음) */
       pushStateEl.addEventListener('hy-push-state-load', updateLangToggle);
       pushStateEl.addEventListener('hy-push-state-ready', updateLangToggle);
     }
