@@ -143,6 +143,23 @@
     }
   }
 
+  function fixLinkOnClick(e) {
+    /* hy-push-state가 클릭을 가로채 href를 읽어가기 전에, 캡처 단계에서
+       먼저 현재 페이지 언어에 맞는 메인 메뉴 링크로 고쳐놓는다. updateMainNav
+       같은 "미리 갱신해두기" 방식은 타이밍이 어긋나면 예전 링크로 이동해버릴
+       수 있어서, 클릭되는 바로 그 순간 기준으로 다시 한번 확실히 고정한다.
+       (lang-toggle 자체의 두 링크는 항상 정확한 목적지를 가리키므로 건드리지 않는다.) */
+    var link = e.target.closest && e.target.closest('a.sidebar-nav-item[href]');
+    if (!link) return;
+    var href = link.getAttribute('href');
+    if (!href || !isTranslatable(href)) return;
+
+    var currentIsEn = computeUrls(window.location.pathname).isEn;
+    var target = currentIsEn ? computeUrls(href).en : computeUrls(href).ko;
+    if (target !== href) link.setAttribute('href', target);
+  }
+  document.addEventListener('click', fixLinkOnClick, true);
+
   document.addEventListener('DOMContentLoaded', updateLangToggle);
   document.addEventListener('DOMContentLoaded', function () {
     var pushStateEl = document.getElementById('_pushState');
