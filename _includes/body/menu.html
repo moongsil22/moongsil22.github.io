@@ -105,6 +105,17 @@
     return { ko: '/' + koSeg + '/', en: '/' + enSeg + '/', isEn: isEn };
   }
 
+  function updateMainNav(isEn) {
+    /* 좌측 드로어의 메인 메뉴(About/Cover Letter/Project/Posts)도
+       현재 보고 있는 페이지의 언어에 맞춰 -en 유무를 맞춰준다. */
+    document.querySelectorAll('a.sidebar-nav-item[href]').forEach(function (link) {
+      var href = link.getAttribute('href');
+      if (!href || !isTranslatable(href)) return;
+      var target = isEn ? computeUrls(href).en : computeUrls(href).ko;
+      if (target !== href) link.setAttribute('href', target);
+    });
+  }
+
   function updateLangToggle() {
     var toggle = document.getElementById('lang-toggle');
     if (!toggle) return;
@@ -117,6 +128,8 @@
     toggle.style.display = '';
 
     var urls = computeUrls(path);
+    updateMainNav(urls.isEn);
+
     var links = toggle.querySelectorAll('a');
     var koLink = links[0];
     var enLink = links[1];

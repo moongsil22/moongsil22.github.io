@@ -1,5 +1,6 @@
 ---
 layout: post
+author: author1_en
 tags: [posts-en]
 title: Aggregating Account Codes with Oracle Hierarchical Queries (CONNECT BY)
 description: >

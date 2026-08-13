@@ -1,5 +1,6 @@
 ---
 layout: post
+author: author1_en
 tags: [posts-en]
 title: What Happened When We Dropped the Wrong Partitions (Global Index UNUSABLE)
 description: >

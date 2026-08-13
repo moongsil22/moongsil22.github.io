@@ -1,5 +1,6 @@
 ---
 layout: post
+author: author1_en
 tags: [posts-en]
 title: "Don't Put React State Just Anywhere: When to Use a Store, and When Not To"
 description: >
