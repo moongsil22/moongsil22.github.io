@@ -17,7 +17,7 @@
 
 # Language of your content in 2-letter code, e.g.: en, de.
 # You may also provide a location, e.g.: en-us, de_AT.
-lang:                  en
+lang:                  ko
 
 # The title of your blog. Used in the sidebar and the browser tab.
 title:                 Eunsil Kim
@@ -49,11 +49,11 @@ author:
 menu:
   - title:             About
     url:               /about/
-  - title:             자기소개서
+  - title:             Cover Letter
     url:               /cover-letter/
   - title:             Project
     url:               /projects/
-  - title:             개발 블로그
+  - title:             Posts
     url:               /posts/
 
 # Add links to the footer.

@@ -1,5 +1,6 @@
 ---
 layout: post
+tags: [posts]
 title: React 상태는 아무데나 두면 안 된다 — store를 쓸 때와 쓰지 말아야 할 때
 description: >
   전역 store에 상태를 다 몰아넣었을 때 겪은 문제와, local state / 전역 store / 서버 상태를 구분해서 쓰게 된 기준.

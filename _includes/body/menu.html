@@ -1,0 +1,142 @@
+<!-- 한/영 페이지 토글: 손번역된 -en 페이지로 직접 링크 (구글 번역 엔진 미사용) -->
+<style>
+  #lang-toggle {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border-color, currentColor);
+    border-radius: 999px;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1;
+    margin-left: 6px;
+  }
+  #lang-toggle a {
+    background: transparent;
+    border: none;
+    color: var(--body-color, inherit);
+    padding: 6px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    opacity: 0.55;
+    text-decoration: none;
+    transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  }
+  #lang-toggle a:hover { opacity: 0.85; }
+  #lang-toggle a.active {
+    opacity: 1;
+    background-color: rgb(31,55,75);
+    color: #fff;
+    font-weight: 600;
+  }
+</style>
+
+{% assign ko_pages = "/,/about/,/cover-letter/,/projects/,/posts/" | split: "," %}
+{% assign show_toggle = false %}
+{% if page.layout == 'post' %}{% assign show_toggle = true %}{% endif %}
+{% if ko_pages contains page.url %}{% assign show_toggle = true %}{% endif %}
+{% if page.url contains '-en' %}{% assign show_toggle = true %}{% endif %}
+{% if page.url == '/en/' %}{% assign show_toggle = true %}{% endif %}
+
+{% if page.url == '/' or page.url == '/en/' %}
+  {% if page.url == '/en/' %}
+    {% assign is_en = true %}
+  {% else %}
+    {% assign is_en = false %}
+  {% endif %}
+  {% assign ko_url = '/' %}
+  {% assign en_url = '/en/' %}
+{% else %}
+  {% assign url_segs = page.url | split: '/' %}
+  {% assign last_seg = url_segs.last %}
+  {% if last_seg contains '-en' %}
+    {% assign is_en = true %}
+    {% assign ko_seg = last_seg | remove: '-en' %}
+    {% assign ko_url = '/' | append: ko_seg | append: '/' %}
+    {% assign en_url = page.url %}
+  {% else %}
+    {% assign is_en = false %}
+    {% assign en_seg = last_seg | append: '-en' %}
+    {% assign en_url = '/' | append: en_seg | append: '/' %}
+    {% assign ko_url = page.url %}
+  {% endif %}
+{% endif %}
+
+<div id="_navbar" class="navbar fixed-top">
+  <div class="content">
+    <span class="sr-only">{{ site.data.strings.jump_to | default:"Jump to" }}{{ site.data.strings.colon | default:":" }}</span>
+    <div class="nav-btn-bar">
+      <a id="_menu" class="nav-btn no-hover" href="#_drawer--opened">
+        <span class="sr-only">{{ site.data.strings.navigation | default:"Navigation" }}</span>
+        <span class="icon-menu"></span>
+      </a>
+      <div class="nav-span"></div>
+      <div id="lang-toggle" style="{% unless show_toggle %}display:none;{% endunless %}">
+        <a href="{{ ko_url }}" class="{% unless is_en %}active{% endunless %}">한국어</a>
+        <a href="{{ en_url }}" class="{% if is_en %}active{% endif %}">English</a>
+      </div>
+    </div>
+  </div>
+</div>
+<hr class="sr-only" hidden />
+
+<script>
+(function () {
+  // 이 사이트는 hy-push-state(SPA 방식)로 페이지를 넘겨서, #_main 바깥에 있는
+  // 이 네브바는 페이지 이동 시 자동으로 다시 렌더링되지 않는다.
+  // 그래서 페이지가 바뀔 때마다(초기 로드 + SPA 네비게이션 후) 토글의 href/active 상태를
+  // 현재 location.pathname 기준으로 다시 계산해서 반영한다.
+  var KO_PAGES = ['/', '/about/', '/cover-letter/', '/projects/', '/posts/'];
+  var POST_RE = /^\/\d{4}-\d{2}-\d{2}-.+\/$/;
+
+  function isTranslatable(path) {
+    return KO_PAGES.indexOf(path) !== -1 || path === '/en/' || POST_RE.test(path) || path.indexOf('-en') !== -1;
+  }
+
+  function computeUrls(path) {
+    if (path === '/' || path === '/en/') {
+      return { ko: '/', en: '/en/', isEn: path === '/en/' };
+    }
+    var segs = path.split('/').filter(Boolean);
+    var last = segs[segs.length - 1] || '';
+    var isEn = last.indexOf('-en') !== -1;
+    var koSeg = isEn ? last.replace('-en', '') : last;
+    var enSeg = isEn ? last : last + '-en';
+    return { ko: '/' + koSeg + '/', en: '/' + enSeg + '/', isEn: isEn };
+  }
+
+  function updateLangToggle() {
+    var toggle = document.getElementById('lang-toggle');
+    if (!toggle) return;
+
+    var path = window.location.pathname;
+    if (!isTranslatable(path)) {
+      toggle.style.display = 'none';
+      return;
+    }
+    toggle.style.display = '';
+
+    var urls = computeUrls(path);
+    var links = toggle.querySelectorAll('a');
+    var koLink = links[0];
+    var enLink = links[1];
+    if (koLink) {
+      koLink.setAttribute('href', urls.ko);
+      koLink.classList.toggle('active', !urls.isEn);
+    }
+    if (enLink) {
+      enLink.setAttribute('href', urls.en);
+      enLink.classList.toggle('active', urls.isEn);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', updateLangToggle);
+  document.addEventListener('DOMContentLoaded', function () {
+    var pushStateEl = document.getElementById('_pushState');
+    if (pushStateEl) {
+      pushStateEl.addEventListener('hy-push-state-after', updateLangToggle);
+    }
+  });
+  updateLangToggle();
+})();
+</script>

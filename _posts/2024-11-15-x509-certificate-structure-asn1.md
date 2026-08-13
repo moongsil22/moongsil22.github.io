@@ -1,5 +1,6 @@
 ---
 layout: post
+tags: [posts]
 title: X.509 인증서 구조 뜯어보기 (ASN.1 DER 분석)
 description: >
   대학원 현대암호학 수업 과제로 공개키 인증서를 바이트 단위로 분석하며 정리한 X.509 v3 필드와 ASN.1 DER 인코딩 노트. (예시 값으로 각색)

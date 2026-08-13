@@ -1,0 +1,8 @@
+---
+layout: list
+title: Posts
+description: >
+  A running log of problems I've run into at work and how I worked through them.
+slug: posts-en
+grouped: true
+---

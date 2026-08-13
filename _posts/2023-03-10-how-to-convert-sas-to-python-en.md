@@ -1,18 +1,18 @@
 ---
 layout: post
-tags: [posts]
+tags: [posts-en]
 title: How to Convert SAS to Python
 description: >
-  SAS에서 Python으로 데이터 전처리 로직을 이관할 때 자주 쓰는 패턴 모음 (Oracle 연동, Import/Export, 컬럼 처리, 전치, 결합, 조건 컬럼 생성, 매크로 대체 등).
+  A collection of patterns I used often when migrating data preprocessing logic from SAS to Python (Oracle connectivity, import/export, column handling, transpose, joins, conditional columns, macro replacement, and more).
 ---
 
-경영분석 데이터 전처리 로직을 SAS에서 Python으로 이관하면서 자주 쓰게 된 패턴을 정리해둔다. Oracle 연동부터 Import/Export, 컬럼 가공, 전치, 결합, 조건별 컬럼 생성, SAS 매크로를 Python으로 대체하는 방법까지 실무에서 반복적으로 마주친 순서대로 묶었다.
+Notes on patterns I ended up using repeatedly while migrating business-analysis data preprocessing logic from SAS to Python. Grouped in the order I actually ran into them in practice — from Oracle connectivity, to import/export, column manipulation, transpose, joins, conditional column creation, and finally replacing SAS macros with Python.
 
-#### 0. 오라클 연동, 라이브러리 참조, 변수 선언
+#### 0. Oracle Connection, Library References, and Variable Declarations
 
 #### SAS 
 
-오라클 연동 시, 선행작업으로 오라클 클라이언트 설치와 tnsnames.ora 파일 설정이 필요하다
+Before connecting to Oracle, you first need the Oracle client installed and a `tnsnames.ora` file configured.
 
 ~~~sas
 FILENAME PGM_PATH "&SAS_PGM_PTH./";
@@ -25,8 +25,8 @@ libname saslib "&DATA_DIR.\saslib";
 
 #### Python
 
-cx_Oracle 설치 필요. -> pip install cx_Oracle
-oracleTest.py 만든 다음사용. -> import oracleTest 
+Requires cx_Oracle. -> pip install cx_Oracle
+Create oracleTest.py first, then use it. -> import oracleTest 
 
 oracleTest.py
 ~~~python
@@ -39,7 +39,7 @@ def query_OracleSQL(query):
 
     start_tm = datetime.now()
 
-    #   DB Connecion
+    #   DB Connection
     dsn_tns = co.makedsn("192.168.0.1", "1521", service_name="TEST")
     conn = co.connect(user="test", password="123456", dsn=dsn_tns)
 
@@ -73,7 +73,7 @@ df1 = oracleTest.query_OracleSQL(query)
 ~~~
 
 
-#### 1. Dataset import From CSV, EXCEL, SQL query , Exist Dataset
+#### 1. Dataset import From CSV, EXCEL, SQL query, Existing Dataset
 
 ##### 1.1 CSV 
 
@@ -91,10 +91,10 @@ LENGTH
   PRODUCT_CODE1 8
   PRODUCT_CODE2 8;
 LABEL
-  NO = "고유번호"
-  AMOUNT = "매출액"
-  PRODUCT_CODE1 = "상품1"
-  PRODUCT_CODE2 = "상품2";
+  NO = "ID"
+  AMOUNT = "Sales Amount"
+  PRODUCT_CODE1 = "Product 1"
+  PRODUCT_CODE2 = "Product 2";
 INFORMAT
   NO = $CHAR32.
   AMOUNT = BEST15.
@@ -112,7 +112,7 @@ RUN;
 ~~~python
 import pandas as pd
 
-T_001 = pd.read_csv(r"C:\Users\BOK\Desktop\단계별데이터추출\STEP1.T_001.csv", sep=',',
+T_001 = pd.read_csv(r"C:\Users\BOK\Desktop\extract-by-step\STEP1.T_001.csv", sep=',',
 names = ['no', 'name', 'age'],
 header=None,
 dtype = {"no":str,
@@ -154,7 +154,7 @@ RULE = pd.read_excel(r"C:\data\step2_error_check.xlsx", sheet_name='RULE',
 ##### 1.3 ORACLE/QUERY TABLE 
 
 ###### SAS
-PROC SQL에서 SAS라이브러리/WORK/ORACLE DATA SET 로드하여 사용 가능. 테이블 생성 이외에 dml 처리 가능
+With PROC SQL you can load and use SAS library/WORK/Oracle datasets. Besides creating tables, DML is also possible.
 ~~~sas
 PROC SQL;
 CREATE TABLE BBB AS
@@ -167,14 +167,14 @@ RUN;
 ~~~
 
 ###### PYTHON
-pandasql에서 dataframe 로드하여 사용 가능. 테이블 생성 이외에 dml 처리 가능
+With pandasql you can load and use a dataframe. Besides creating tables, DML is also possible.
 ~~~python
 import pandasql as ps
 query = f"select no, name from df1"
 df2 = ps.sqldf(query)
 ~~~
 
-##### 1.4 기생성된 데이터셋 참조하여 새로운 데이터셋 만들기
+##### 1.4 Creating a New Dataset From an Existing One
 
 ###### SAS
 ~~~sas
@@ -186,7 +186,7 @@ SET AAA(where=(time='2019'));
 
 no_list = ['1','3','7']
 
-df2 = df1.copy() #원본데이터 변경 방지를 위해 copy() 사용
+df2 = df1.copy() # use copy() to avoid mutating the original data
 df2 = df2.loc[(~df2['no'].isin(no_list)) & (df2['name'] !='KANG')]
 
 ~~~
@@ -203,7 +203,7 @@ FILE OUT_PATH(&OUT) MOD;
 IF FIRST.NO THEN DO;
   PUT @20 "&TITLE";
   PUT /"&ls_t1_line";
-  PUT @2 "데이터파일" @40 "처리건수";
+  PUT @2 "Data File" @40 "Record Count";
   PUT "&ls_t1_line"/;
 END;
   PUT @2 source @40 CNT;
@@ -218,7 +218,7 @@ data _null_;
   %let _EFIREC_=0;
   file "outpath/xxx..csv" delimiter=',' DROPOVER DSD lrecl=10000;
   format NO $2;
-  if _n_ = 1 then /*첫째줄 컬럼명 */
+  if _n_ = 1 then /* first line: column names */
   do;
     put
     'NO,'CODE','A1','A2','A3'
@@ -242,7 +242,7 @@ data _null_;
   file "outpath/xxx..xls" MOD delimiter='09'X DSD lrecl=10000;
   if _n_ = 1 then do;
    PUT /"&ls_t1_line";
-   PUT "종류" '09'X "사용여부" '09'X "건수" ;
+   PUT "Type" '09'X "In Use" '09'X "Count" ;
    PUT "&ls_t1_line"/;
   end;
   PUT NO USE_YN CNT
@@ -263,10 +263,10 @@ df.to_excel('./aa.xls')
 ~~~
 
 
-#### 3. DROP 컬럼
+#### 3. DROP Columns
 
 ##### SAS
-DATA, SET, OUT 블럭에서 사용가능
+Usable in DATA, SET, and OUT blocks.
 ~~~sas
 DATA aaa(DROP=AMOUNT NO);
 RUN;
@@ -276,10 +276,10 @@ DROP AMOUNT;
 RUN;
 ~~~
 
-#### 4. RENAME 컬럼
+#### 4. RENAME Columns
 
 ##### SAS
-DATA, SET, OUT 블럭에서 사용가능
+Usable in DATA, SET, and OUT blocks.
 ~~~sas
 DATA AA(RENAME=(OLD_AMOUNT=NEW_AMOUNT OLD_NO=NEW_NO));
 RUN;
@@ -298,7 +298,7 @@ df.rename(columns={'old_name':'new_name', 'old_no':'new_no'}, inplace=True)
 ~~~
 
 
-#### 5. SORT 정렬
+#### 5. SORT
 
 ##### SAS
 ~~~sas
@@ -310,7 +310,7 @@ RUN;
 df.sort_values(by=['no','name'], inplace=True)
 ~~~
 
-#### 6. 데이터 전치(행 -> 열)
+#### 6. Transpose (rows -> columns)
 ASIS
 NO CODE1 CODE2
 1 1000 2000
@@ -334,7 +334,7 @@ df_tr = pd.melt(data=df, id_vars=['NO'], value_vars=['CODE1', 'CODE2'], var_name
 df_tr.sort_values(by=['NO'], inplace=True)
 ~~~
 
-#### 7. 데이터 전치(열 -> 행)
+#### 7. Transpose (columns -> rows)
 ASIS
 NO AMOUNT PRODUCT_CODE
 1 1000 CODE1
@@ -355,13 +355,13 @@ RUN;
 ~~~
 
 ##### Python
-!pivot_table 경우 index컬럼 속성 안에 nan값이 있으면 row가 출력되지 않으므로 index column에 대하여 결측값 처리를 해야한다.
+Note: with pivot_table, if the index column contains NaN values, that row won't appear in the output, so missing values in the index column need to be handled first.
 ~~~python
 df_tr = pd.pivot_table(data=df, index=['NO'], columns='PRODUCT_CODE', values='AMOUNT')
 df_tr.reset_index(inplace=True)
 ~~~
 
-#### 8. 숫자형 변수 결측값 0으로 처리
+#### 8. Filling Missing Numeric Values With 0
 
 ##### SAS
 ~~~sas
@@ -379,9 +379,9 @@ RUN;
 df.update(df.select_dtypes(include=[np.number]).fillna(0))
 ~~~
 
-#### 9. 삭제
+#### 9. Deletion
 
-##### 행 삭제
+##### Deleting rows
 
 ###### SAS
 ~~~sas
@@ -397,7 +397,7 @@ RUN;
 df.drop(df[df['NO'] =='1'].index, inplace=True)
 ~~~
 
-##### 열 삭제
+##### Deleting columns
 
 ###### SAS
 ~~~sas
@@ -410,7 +410,7 @@ RUN;
 df.drop(['NO', 'NAME'], axis=1, inplace=True)
 ~~~
 
-#### 10. 데이터셋 세로로 결합
+#### 10. Concatenating Datasets Vertically
 
 ##### SAS
 ~~~sas
@@ -419,13 +419,13 @@ PROC APPEND BASE=NEW_DATA DATA=AAA FORCE; RUN;
 
 ##### Python
 ~~~python
-#1.append
+#1. append
 df_new = df_new.append(df_aaa)
-#2.concat
+#2. concat
 df_new = pd.concat([df_aaa, df_bbb], axis=0)
 ~~~
 
-#### 11. 데이터셋 가로로 결합(left merge)
+#### 11. Joining Datasets Horizontally (left merge)
 
 ##### SAS
 ~~~sas
@@ -440,8 +440,8 @@ IF T1=1 OR T2=0;
 df_ab = df_a.merge(right=df_b, how='left', on=['NO'])
 ~~~
 
-#### 12. 중복제거
-하기방법 이외에 쿼리에서 distinct 처리
+#### 12. Removing Duplicates
+Besides this approach, you can also use DISTINCT in a query.
 ##### SAS
 ~~~sas
 PROC SORT DATA=aa NODUPKEY;BY NO;
@@ -452,9 +452,9 @@ RUN;
 df.drup_duplicates(subset=['NO','NAME'], inplace=True, keep='first')
 ~~~
 
-#### 13. 조건에 따른 새로운 컬럼 속성 추가
-하기방법 이외에 쿼리에서 CASE WHEN 처리
-예시1)
+#### 13. Adding a New Column Based on a Condition
+Besides this approach, you can also use CASE WHEN in a query.
+Example 1)
 ##### SAS
 ~~~sas
 DATA AAA;
@@ -476,7 +476,7 @@ df_aaa.loc[(df_aaa['REGION'] == 'A') & (df_aaa['AGE'] >= 50),'GROUP'] = '1'
 df_aaa.loc[(df_aaa['REGION'] == 'A') & (df_aaa['AGE'] < 50),'GROUP'] = '2'
 df_aaa.loc[(df_aaa['NAME'] == 'ABC'),'GROUP'] = '99'
 ~~~
-예시2)
+Example 2)
 ##### SAS
 ~~~sas
 DATA AAA;
@@ -504,7 +504,7 @@ df_aaa['CODE'] = df_aaa['END_DATE'].apply(lambda x: '1' if ( '01' <= str(x)[4:6]
 df_aaa['MONTH'] = df_aaa['END_DATE'].apply(lambda x: str(x)[4:6] if len(str(x).strip()) == 6 else
 						     '99')
 ~~~
-예시3)
+Example 3)
 ##### SAS
 ~~~sas
 DATA AAA;
@@ -533,14 +533,14 @@ df_aaa['REG_GROUP'] = df_aaa['REGION'].apply(lambda x: '1' if x in ['1','2'] els
 
 
 
-#### 기타1 SAS 매크로 로깅 방법
+#### Extra 1: How to Log SAS Macros
 ~~~sas
 FILENAME MPRINT 'C:\DATA\LOG01.SAS';
 OPTIONS MPRINT MFILE MLOGIC SYMBOLGEN;
 RUN;
 ~~~
 
-#### 기타2 SAS 매크로 함수 생성 to Python
+#### Extra 2: Rewriting a SAS Macro Function in Python
 
 ~~~sas
 %MACRO FIND_FML(SEQ);
@@ -592,13 +592,13 @@ for index, row in fml_df.iterrows():
       print(err)
 ~~~
    
-#### 기타3 SAS WORK KILL
+#### Extra 3: SAS WORK KILL
 ~~~sas
 PROC DATASETS LIBRARY=WORK MEMTYPE=DATA KILL; QUIT; RUN;
 ~~~
 
 
-#### PYTHON 데이터프레임 컬럼중에 특정패턴 가지는 컬럼 추출
+#### PYTHON: Extracting DataFrame Columns Matching a Pattern
 ~~~python
 pattern = re.compile("A*[0-9]")
 t1_columns = ",".join('T1.'+ a_column for a_column in list(filter(lambda x: pattern.match(x), df_aaa.columns)))
@@ -607,7 +607,7 @@ pattern = re.compile("A*[0-9]")
 columns = list(filter(lambda x: pattern.match(x), df_aaa.columns))
 ~~~
 
-#### PYTHON 데이터프레임 특정 컬럼들의 합이 0인 row 추출
+#### PYTHON: Extracting Rows Where Specific Columns Sum to 0
 ~~~python
 pattern = re.compile("A*[0-9]")
 columns = list(filter(lambda x: pattern.match(x), df_aaa.columns))
@@ -617,7 +617,7 @@ df_bbb = df_aaa.loc[df_aaa[columns].sum(axis=1) == 0]
 ~~~
 
 
-#### PYTHON dataframe 특정 산식(A1=A2+A3)에 맞지 않는 오류건 row 추출하여 별도의 dataframe 생성 
+#### PYTHON: Building a Separate DataFrame of Rows That Fail a Formula Check (A1=A2+A3)
 ~~~python
 import operator
 ops = {
@@ -652,19 +652,19 @@ for idx, row in df_aaa.iterrows():
 invalid_df.sort_values(by=['NO'], inplace=True)
 ~~~
 
-#### PYTHON 후위표기법으로 계산하기
+#### PYTHON: Evaluating With Postfix Notation
 ~~~python
 """**************************************************************************************************
- 0. 함수 : Dataset의 컬럼간의 사칙연산을 후위표기법 알고리즘에 따라 구현
-   - 중위표기법 : (A+B)*(C+D)
-   - 후위표기법 : AB+CD+*
-   - 중위표기법을 후위표기법으로 스택(STACK)을 이용
-     1) 피연산자는 스택에 넣지않고 그냥 출력
-	 2) 연산자는 스택이 비었으면 스택에 push
-	 3) 연산자는 스택이 비어있지 않으면 스택에 있는 연산자와 우선순위를 비교해 스택에 있는 연산자의 우선순위가 
-	    같거나 크다면 스택에 있는 연산자를 pop을 한 후 출력하고 현재 연산자를 push
-	 4) 만약 3번에서 우선순위가 현재 연산자가 더 크면 현재 연산자를 push
-	 5) 수식이 킅나면 스택이 빌때까지 pop한 후 출력
+ 0. Function: implements arithmetic across dataframe columns using a postfix-notation algorithm
+   - Infix notation: (A+B)*(C+D)
+   - Postfix notation: AB+CD+*
+   - Converting infix to postfix using a stack
+     1) an operand is output directly, without pushing it onto the stack
+	 2) if the stack is empty, push the operator
+	 3) if the stack isn't empty, compare the operator's precedence with the one on top of the stack;
+	    if the one on the stack has equal or higher precedence, pop and output it, then push the current operator
+	 4) if the current operator has higher precedence than step 3's comparison, push the current operator
+	 5) once the expression ends, pop everything remaining on the stack and output it
    rule  = ['A3', '+', 'A4', '+', 'A5', '+', 'A6'] 
    rule2 = ['A3', 'A4', '+', 'A5', '+', 'A6', '+'] 
 **************************************************************************************************"""
@@ -719,16 +719,16 @@ def get_sum(df, rule) :
 		if stack[i-1] != '(' :
 			rule2.append(stack[i-1])
 	
-	# 후기표기법으로 변경된 rule을 연산처리
-	# rule2의 피연산자가 1개이면 그값이 바로 target값
-	# rule2의 앞부터 연산자를 찾아 그 앞 2개의 피연산자를 연산처리한다. 연산자와 피연산자2개를 삭제하고 연산결과를 rule2에 추가한다
+	# process the rule now that it's been converted to postfix notation
+	# if rule2 has a single operand, that value is the target value directly
+	# scan rule2 from the front for an operator, process the two operands before it, remove the operator and both operands, and append the result back into rule2
 	# target : result
 	# rule2 = ['A3', 'A4', '+', 'A5', '+', 'A6', '+'] 
-	# 연산: df['result'] = df['A3']+df['A4']
+	# operation: df['result'] = df['A3']+df['A4']
     # rule2 = ['result','A5','+','A6','+']
-	# 연산: df['result'] = df['result']+df['A5']
+	# operation: df['result'] = df['result']+df['A5']
     # rule2 = ['result','A6','+']
-	# 연산: df['result'] = df['result']+df['A6']
+	# operation: df['result'] = df['result']+df['A6']
 	col1 = 'result'
 	col2 = ''
 	col3 = ''
@@ -765,8 +765,10 @@ def get_sum(df, rule) :
 			if len(rule2) == 1 :
 			    break;
 """**************************************************************************************************
- 3. get_sum 함수를 호출하여 오류체크 비율식의 컬럼별 연산을 하여 'result' 컬럼(우측 식) 을 생성하여 비교대상컬럼('org_column')(좌측 식)과
-    비교하여 조건에 맞지 않는 데이터를 추려내 오류파일 생성 EX) fml => A_column = B_column + C_column 
+ 3. Call get_sum to compute each formula-check ratio's column operation, producing a 'result' column
+    (the right-hand side of the formula), then compare it against the target column ('org_column',
+    the left-hand side) to pull out rows that don't satisfy the condition, and generate an error file.
+    E.g. formula => A_column = B_column + C_column 
 **************************************************************************************************"""
 for index, row in formula_df.iterrows() :
     get_sum(df_aaa, row['formula_hap']) 
@@ -793,10 +795,10 @@ for index, row in formula_df.iterrows() :
 		invalid_sum_df = pd.concat([invalid_sum_df, tmp2_df])
 ~~~
 
-#### 경영분석 데이터 전처리 및 편제 절차
+#### Business-Analysis Data Preprocessing and Compilation Procedure
 
-1. 자료로드 및 모수 확정
-2. 원자료 오류검증(조건에 해당하는 경우 절대값 하여 합 처리)
-3. 자료 계정 변환처리 (A자료 ->B자료로 맵핑)
-4. 컬럼별 조건에 따른 새로운 컬럼 정의
-5. 산식 오류 검증 (A1=A2+A3 가 맞는지 확인하는 절차)
+1. Load the data and confirm parameters
+2. Validate the raw data for errors (take the absolute value and sum where a condition applies)
+3. Transform account mappings (map dataset A -> dataset B)
+4. Define new columns based on per-column conditions
+5. Validate formulas (the check for whether A1 = A2 + A3 holds)

@@ -63,6 +63,26 @@ author1:
     # download:        <url>
     # keybase          <username>
 
+# English version of author1, used on -en pages via `author: author1_en` in front matter
+author1_en:
+  name:              Eunsil Kim
+  email:             eunsil.kim.kr@gmail.com
+
+  about:             |
+    An IT developer with experience across payments, ERP, ITSM, and OAM systems, and a
+    background in information security. I've built and operated systems across a range of
+    domains — real-time PG approval, merchant settlement, ERP management accounting, ITSM
+    rebuilds — and I care about building services that are stable and trustworthy.
+
+  picture:
+    path:            /assets/img/eskim.jpg
+    srcset:
+      1x:            /assets/img/eskim.jpg
+      2x:            /assets/img/eskim.jpg
+
+  social:
+    github:          https://github.com/moongsil22
+
 # Another author (optional)
 author2:
   name:              <firtname> <lastname>

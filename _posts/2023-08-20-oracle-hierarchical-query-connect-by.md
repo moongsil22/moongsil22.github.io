@@ -1,5 +1,6 @@
 ---
 layout: post
+tags: [posts]
 title: Oracle 계층형 쿼리(CONNECT BY)로 계정코드 집계하기
 description: >
   관리회계 시스템에서 상/하위 계정코드 단위 금액합계를 구할 때 쓴 Oracle 계층형 쿼리(START WITH, CONNECT BY, PRIOR, LEVEL) 정리.

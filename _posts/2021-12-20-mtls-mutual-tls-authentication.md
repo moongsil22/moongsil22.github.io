@@ -1,5 +1,6 @@
 ---
 layout: post
+tags: [posts]
 title: mTLS(상호 인증 TLS) 구조 정리
 description: >
   일반 TLS와 mTLS의 차이, 핸드셰이크 절차, Nginx·Java 환경에서의 설정 방식을 정리했다.

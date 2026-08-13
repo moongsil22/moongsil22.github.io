@@ -1,3 +1,16 @@
+<!-- 텍스트 드래그 선택/복사(Ctrl+C) 비활성화. 실제 보안은 아니고 캐주얼한 복사만 막는 용도. -->
+<style>
+  #_main {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+</style>
+<script>
+  document.addEventListener('copy', function (e) { e.preventDefault(); });
+</script>
+
 <!-- <script>
   document.querySelector('hy-push-state').setAttribute('prefetch', '');
 
