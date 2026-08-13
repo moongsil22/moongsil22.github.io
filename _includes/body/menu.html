@@ -134,8 +134,13 @@
   document.addEventListener('DOMContentLoaded', function () {
     var pushStateEl = document.getElementById('_pushState');
     if (pushStateEl) {
-      pushStateEl.addEventListener('hy-push-state-after', updateLangToggle);
+      // 실제 hy-push-state 커스텀 엘리먼트가 쏘는 이벤트는 -after가 아니라
+      // -load / -ready 다. (예전에 -after로 잘못 걸어놔서 SPA 네비게이션 후
+      // 토글이 계속 이전 페이지 상태로 멈춰있던 버그의 원인이었음)
+      pushStateEl.addEventListener('hy-push-state-load', updateLangToggle);
+      pushStateEl.addEventListener('hy-push-state-ready', updateLangToggle);
     }
+    window.addEventListener('popstate', updateLangToggle);
   });
   updateLangToggle();
 })();
